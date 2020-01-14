@@ -15,6 +15,9 @@ interface TracksDao {
     @Update
     suspend fun update(tracksEntity: TracksEntity)
 
+    @Query("DELETE FROM tracksentity")
+    suspend fun deleteAllPosts()
+
     @get:Query(
         "SELECT * FROM tracksentity ORDER BY id DESC"
     )
