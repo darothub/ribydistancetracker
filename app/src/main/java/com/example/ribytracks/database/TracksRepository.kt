@@ -8,7 +8,7 @@ class TracksRepository(application: Application) {
     private val database = TracksDatabase.getInstance(application)
 
     private val tracksDao:TracksDao =database!!.tracksDao()
-    var allPosts =tracksDao.allTracks
+    var allTracks =tracksDao.allTracks
 
     fun insert(tracksEntity: TracksEntity, application: Application){
         CoroutineTaskSingleton.getInstance(application).insertTask(tracksDao, tracksEntity)
