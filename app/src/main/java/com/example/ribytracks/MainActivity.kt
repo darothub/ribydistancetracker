@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
 //
         btn.setOnClickListener {
 
-            gpsSetting()
+
 
 
 
@@ -94,6 +94,7 @@ class MainActivity : AppCompatActivity() {
             if (ContextCompat.checkSelfPermission(this,
                     ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
+                gpsSetting()
 
                 requestPerm()
                 getLocation()
@@ -263,7 +264,8 @@ class MainActivity : AppCompatActivity() {
                             val routes = response.getJSONArray("routes")
                             val subRoute = routes.getJSONObject(0)
                             val legs = subRoute.getJSONArray("legs")
-                            val distance = legs.getJSONObject(0).getJSONObject("distance")
+                            val steps = legs.getJSONObject(0).getJSONArray("steps")
+                            val distance = steps.getJSONObject(0).getJSONObject("distance")
                             val mdistance = distance.getString("text")
 
                             distanceText.visibility = View.VISIBLE
