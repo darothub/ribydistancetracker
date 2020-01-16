@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">RibyTracks</string>
     <string name="api_key">AIzaSyBylAlQpXXhe1hhYfLyh9mEchn9loD5GkI</string>
+    <string name="viewLast"><u>View last distance covered</u></string>
+    <string name="collapse"><u>Collapse data</u></string>
 </resources>

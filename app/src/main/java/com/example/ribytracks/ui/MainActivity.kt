@@ -1,31 +1,23 @@
-package com.example.ribytracks
+package com.example.ribytracks.ui
 
-import android.Manifest
 import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
-import android.location.Location
 
-import android.location.LocationManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.DialogTitle
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import androidx.navigation.Navigation
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
+import com.example.ribytracks.R
 import com.example.ribytracks.database.TracksDatabase
 import com.example.ribytracks.database.TracksEntity
 import com.example.ribytracks.utils.VolleySingleton
@@ -36,14 +28,12 @@ import com.google.android.gms.tasks.Task
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.lang.Exception
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.*
-import javax.security.auth.login.LoginException
 
 
 class MainActivity : AppCompatActivity() {
@@ -62,6 +52,10 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var tracksEntity: TracksEntity
     lateinit var mdistance:String
+
+    lateinit var lastActivity:TracksEntity
+
+    var result:Boolean = false
 
 //    lateinit var startCoordinatesCollector:List<String>
 //
@@ -83,12 +77,46 @@ class MainActivity : AppCompatActivity() {
 
         tracksviewModel.getAllTracks()?.observe(this, object: Observer<List<TracksEntity?>?>{
             override fun onChanged(t: List<TracksEntity?>?) {
-                Toast.makeText(applicationContext, "$t", Toast.LENGTH_SHORT).show()
+
+                if(t?.size!! > 0){
+                    lastActivity = t.last()!!
+
+                    lastUpdateAnchor.setOnClickListener {
+                        result = setToVisible(startLatText,startLongText,stopLatText,stopLongText,distanceText)
+                        if(lastActivity.id > 0){
+                            startLatText.setText(lastActivity.startPointLat)
+                            startLongText.setText(lastActivity.startPointLong)
+                            stopLatText.setText(lastActivity.stopPointLat)
+                            stopLongText.setText(lastActivity.stopPointLong)
+                            distanceText.setText(lastActivity.distance)
+
+//            Toast.makeText(this, "$result", Toast.LENGTH_SHORT).show()
+                            if(!result){
+                                lastUpdateAnchor.setText(resources.getString(R.string.collapse))
+                            }else{
+                                lastUpdateAnchor.setText(resources.getString(R.string.viewLast))
+                            }
+                        }
+                        else{
+                            Toast.makeText(applicationContext, "You have no previous record", Toast.LENGTH_LONG).show()
+                        }
+
+                    }
+                }
+
+
+
 
 
             }
 
         })
+
+
+
+
+
+
 
         client = LocationServices.getFusedLocationProviderClient(this)
 
@@ -99,7 +127,7 @@ class MainActivity : AppCompatActivity() {
                     stopLong = location.longitude.toString()
 //                    Toast.makeText(applicationContext, "LatUpdate: ${location.latitude}", Toast.LENGTH_LONG).show()
 //                    Toast.makeText(applicationContext, "LongUpdate: ${location.longitude}", Toast.LENGTH_LONG).show()
-gi
+
                     updateLatText.setText("Now at Lat: ${location.latitude}")
                     updateLongText.setText("and Long: ${location.longitude}")
 
@@ -148,8 +176,8 @@ gi
 
 //            stopCoordinatesCollector = listOf(stopLat, stopLong)
 
-            Toast.makeText(applicationContext, "StopLat: $stopLat", Toast.LENGTH_LONG).show()
-            Toast.makeText(applicationContext, "StopLong: $stopLong", Toast.LENGTH_LONG).show()
+//            Toast.makeText(applicationContext, "StopLat: $stopLat", Toast.LENGTH_LONG).show()
+//            Toast.makeText(applicationContext, "StopLong: $stopLong", Toast.LENGTH_LONG).show()
             Toast.makeText(applicationContext, "Update stopped", Toast.LENGTH_LONG).show()
         }
 
@@ -195,7 +223,7 @@ gi
                 200 -> {
                     if(grantResults.size > 0 && permissions[0].equals(ACCESS_FINE_LOCATION)){
                         if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                            Toast.makeText(this, "permit", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "permitted", Toast.LENGTH_LONG).show()
                             Log.i("Location", "permit")
                             getLocation()
                             doLocationUpdates()
@@ -210,40 +238,47 @@ gi
     }
 
 
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 201) {
+            doLocationUpdates()
+        }
+    }
     private fun getLocation(){
 
 
 
-            client.lastLocation.addOnSuccessListener {
-                if (it != null){
-                    Log.i("Location", it.latitude.toString())
+        client.lastLocation.addOnSuccessListener {
+            if (it != null){
+                Log.i("Location", it.latitude.toString())
 
 
-                    startLat = it.latitude.toString()
-                    startLong = it.longitude.toString()
+                startLat = it.latitude.toString()
+                startLong = it.longitude.toString()
 
 //                    startCoordinatesCollector = listOf<String>(startLat, startLong)
 
 
-                    startLatText.visibility = View.VISIBLE
-                    startLongText.visibility = View.VISIBLE
+                startLatText.visibility = View.VISIBLE
+                startLongText.visibility = View.VISIBLE
 
-                    updateLongText.visibility = View.VISIBLE
-                    updateLatText.visibility = View.VISIBLE
+                updateLongText.visibility = View.VISIBLE
+                updateLatText.visibility = View.VISIBLE
 
-                    stopLatText.visibility = View.GONE
-                    stopLongText.visibility = View.GONE
-                    distanceText.visibility = View.GONE
-                    startLatText.setText("StartLat: $startLat")
-                    startLongText.setText("StartLong: $startLong")
+                stopLatText.visibility = View.GONE
+                stopLongText.visibility = View.GONE
+                distanceText.visibility = View.GONE
+                startLatText.setText("StartLat: $startLat")
+                startLongText.setText("StartLong: $startLong")
 
 
-                    Toast.makeText(this, "StartLat: ${it.latitude}", Toast.LENGTH_LONG).show()
-                    Toast.makeText(this, "StartLong: ${it.longitude}", Toast.LENGTH_LONG).show()
+//                    Toast.makeText(this, "StartLat: ${it.latitude}", Toast.LENGTH_LONG).show()
+//                    Toast.makeText(this, "StartLong: ${it.longitude}", Toast.LENGTH_LONG).show()
 
-                }
-                Log.i("Location", "null")
             }
+            Log.i("Location", "null")
+        }
 
 
 
@@ -303,19 +338,13 @@ gi
         Log.i("dataService", "$task")
     }
 
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 201) {
-            doLocationUpdates()
-        }
-    }
-
     fun getDistanceRequest(lat1:String, lon1:String, lat2:String, lon2:String){
 
                 val url =
                     "https://maps.googleapis.com/maps/api/directions/json?origin=$lat1,$lon1&destination=$lat2," +
-                            "$lon2&sensor=false&units=metric&mode=driving&key=${resources.getString(R.string.api_key)}"
+                            "$lon2&sensor=false&units=metric&mode=driving&key=${resources.getString(
+                                R.string.api_key
+                            )}"
 
 
                 val request = JsonObjectRequest(Request.Method.GET, url, null,
@@ -331,7 +360,7 @@ gi
                             distanceText.visibility = View.VISIBLE
                             distanceText.setText(mdistance)
 
-                            Toast.makeText(this, mdistance, Toast.LENGTH_SHORT).show()
+//                            Toast.makeText(this, mdistance, Toast.LENGTH_SHORT).show()
                             Log.i("distance", mdistance)
 
                             //Getting current day
@@ -378,6 +407,23 @@ gi
                 VolleySingleton.getInstance(applicationContext).addToRequestQueue(request)
 
             }
+
+    private fun setToVisible(vararg views: View):Boolean{
+        var res = false
+        for (view in views){
+            if(view.visibility == View.VISIBLE){
+                view.visibility = View.GONE
+               res = true
+            }
+            else{
+                view.visibility = View.VISIBLE
+                res = false
+            }
+        }
+
+        return res
+    }
+
 
 
 }
