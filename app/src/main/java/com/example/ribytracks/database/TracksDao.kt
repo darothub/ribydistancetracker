@@ -19,7 +19,7 @@ interface TracksDao {
     suspend fun deleteAllPosts()
 
     @get:Query(
-        "SELECT * FROM tracksentity ORDER BY id DESC"
+        "SELECT * FROM tracksentity ORDER BY id ASC"
     )
     val allTracks: LiveData<List<TracksEntity?>?>?
 }
