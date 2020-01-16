@@ -6,12 +6,92 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/btn"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
         android:layout_centerInParent="true"
-         />
+        android:gravity="center"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/updateLatText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+
+            android:text=""/>
+
+        <TextView
+            android:id="@+id/updateLongText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:text=""/>
+
+        <Button
+            android:id="@+id/btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Start" />
+
+        <TextView
+            android:id="@+id/startLatText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:text="StartLat"/>
+
+        <TextView
+            android:id="@+id/startLongText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:text="Starlong"/>
+
+        <Button
+            android:id="@+id/stopBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/btn"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="15dp"
+            android:text="Stop" />
+
+        <TextView
+            android:id="@+id/stopLatText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:text="StopLat"/>
+
+        <TextView
+            android:id="@+id/stopLongText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:text="StopLong"/>
+
+
+        <Button
+            android:id="@+id/getDist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:text="Get Distance" />
+
+        <TextView
+            android:id="@+id/distanceText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:text="Distance"/>
+    </LinearLayout>
 
 </RelativeLayout>
