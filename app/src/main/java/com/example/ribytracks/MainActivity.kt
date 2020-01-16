@@ -20,11 +20,16 @@ import androidx.appcompat.widget.DialogTitle
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.Navigation
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
+import com.example.ribytracks.database.TracksDatabase
+import com.example.ribytracks.database.TracksEntity
 import com.example.ribytracks.utils.VolleySingleton
+import com.example.ribytracks.viewmodel.TracksViewModel
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
@@ -36,6 +41,8 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.lang.Exception
 import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.security.auth.login.LoginException
 
 
@@ -51,6 +58,15 @@ class MainActivity : AppCompatActivity() {
     lateinit var stopLat:String
     lateinit var stopLong:String
 
+    lateinit var tracksviewModel: TracksViewModel
+
+    lateinit var tracksEntity: TracksEntity
+    lateinit var mdistance:String
+
+//    lateinit var startCoordinatesCollector:List<String>
+//
+//    lateinit var stopCoordinatesCollector:List<String>
+
 
 
 
@@ -60,6 +76,20 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
+        //View model to observe live data
+        tracksviewModel= ViewModelProviders.of(this).get(TracksViewModel::class.java)
+
+
+        tracksviewModel.getAllTracks()?.observe(this, object: Observer<List<TracksEntity?>?>{
+            override fun onChanged(t: List<TracksEntity?>?) {
+                Toast.makeText(applicationContext, "$t", Toast.LENGTH_SHORT).show()
+
+
+            }
+
+        })
+
         client = LocationServices.getFusedLocationProviderClient(this)
 
         locationCallback = object : LocationCallback() {
@@ -67,11 +97,12 @@ class MainActivity : AppCompatActivity() {
                 for(location in p0?.locations!!){
                     stopLat = location.latitude.toString()
                     stopLong = location.longitude.toString()
-                    Toast.makeText(applicationContext, "LatUpdate: ${location.latitude}", Toast.LENGTH_LONG).show()
-                    Toast.makeText(applicationContext, "LongUpdate: ${location.longitude}", Toast.LENGTH_LONG).show()
-
+//                    Toast.makeText(applicationContext, "LatUpdate: ${location.latitude}", Toast.LENGTH_LONG).show()
+//                    Toast.makeText(applicationContext, "LongUpdate: ${location.longitude}", Toast.LENGTH_LONG).show()
+gi
                     updateLatText.setText("Now at Lat: ${location.latitude}")
                     updateLongText.setText("and Long: ${location.longitude}")
+
 
                 }
             }
@@ -89,12 +120,12 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
+            gpsSetting()
 
             if (ContextCompat.checkSelfPermission(this,
                     ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-                gpsSetting()
+
 
                 requestPerm()
                 getLocation()
@@ -115,6 +146,8 @@ class MainActivity : AppCompatActivity() {
             stopLatText.setText("StopLat: $stopLat")
             stopLongText.setText("StopLong: $stopLong")
 
+//            stopCoordinatesCollector = listOf(stopLat, stopLong)
+
             Toast.makeText(applicationContext, "StopLat: $stopLat", Toast.LENGTH_LONG).show()
             Toast.makeText(applicationContext, "StopLong: $stopLong", Toast.LENGTH_LONG).show()
             Toast.makeText(applicationContext, "Update stopped", Toast.LENGTH_LONG).show()
@@ -123,15 +156,31 @@ class MainActivity : AppCompatActivity() {
         getDist.setOnClickListener {
             try{
                 getDistanceRequest(startLat, startLong, stopLat, stopLong)
+
+//                Toast.makeText(applicationContext, "dist", Toast.LENGTH_LONG).show()
+
             }
             catch (e:Exception){
                 Toast.makeText(applicationContext, "${e.message}", Toast.LENGTH_LONG).show()
             }
 
+
+
+//            Toast.makeText(applicationContext, "mditance $mdistance", Toast.LENGTH_LONG).show()
+
         }
 
 
 
+
+
+
+
+    }
+
+    override fun onStart() {
+        super.onStart()
+        gpsSetting()
     }
 
     override fun onRequestPermissionsResult(
@@ -163,14 +212,25 @@ class MainActivity : AppCompatActivity() {
 
     private fun getLocation(){
 
+
+
             client.lastLocation.addOnSuccessListener {
                 if (it != null){
                     Log.i("Location", it.latitude.toString())
+
+
                     startLat = it.latitude.toString()
                     startLong = it.longitude.toString()
 
+//                    startCoordinatesCollector = listOf<String>(startLat, startLong)
+
+
                     startLatText.visibility = View.VISIBLE
                     startLongText.visibility = View.VISIBLE
+
+                    updateLongText.visibility = View.VISIBLE
+                    updateLatText.visibility = View.VISIBLE
+
                     stopLatText.visibility = View.GONE
                     stopLongText.visibility = View.GONE
                     distanceText.visibility = View.GONE
@@ -219,7 +279,7 @@ class MainActivity : AppCompatActivity() {
             // location requests here.
             // ...
             doLocationUpdates()
-            Toast.makeText(this, "task: ${locationSettingsResponse.locationSettingsStates}", Toast.LENGTH_LONG).show()
+//            Toast.makeText(this, "task: ${locationSettingsResponse.locationSettingsStates}", Toast.LENGTH_LONG).show()
             Log.i("task", "task: ${locationSettingsResponse.locationSettingsStates}")
 
         }
@@ -266,7 +326,7 @@ class MainActivity : AppCompatActivity() {
                             val legs = subRoute.getJSONArray("legs")
                             val steps = legs.getJSONObject(0).getJSONArray("steps")
                             val distance = steps.getJSONObject(0).getJSONObject("distance")
-                            val mdistance = distance.getString("text")
+                            mdistance = distance.getString("text")
 
                             distanceText.visibility = View.VISIBLE
                             distanceText.setText(mdistance)
@@ -274,10 +334,24 @@ class MainActivity : AppCompatActivity() {
                             Toast.makeText(this, mdistance, Toast.LENGTH_SHORT).show()
                             Log.i("distance", mdistance)
 
+                            //Getting current day
+                            val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss" )
+                            val currentDate = sdf.format(Date())
+
+                            tracksEntity= TracksEntity(lat1, lon1, lat2, lon2, currentDate)
+                            tracksEntity.distance = mdistance
+
+                            CoroutineScope(IO).launch{
+                                TracksDatabase.getInstance(baseContext)?.tracksDao()?.insert(tracksEntity)
+                            }
+
+
+
                         }catch (e: Exception){
 
                             Toast.makeText(this, "requestError: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
+
                     }, Response.ErrorListener { error ->
 
                         if(error.networkResponse != null){
@@ -295,11 +369,10 @@ class MainActivity : AppCompatActivity() {
 
                         }
                         else{
-                            Toast.makeText(applicationContext, "Please try again", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(applicationContext, "No network coverage", Toast.LENGTH_SHORT).show()
                         }
 
                     })
-
 
 
                 VolleySingleton.getInstance(applicationContext).addToRequestQueue(request)
